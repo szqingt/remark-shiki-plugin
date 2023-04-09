@@ -42,7 +42,7 @@ const ShikiRemarkPlugin = (options: Options) => {
         const allHighlighted = themes.map((theme) => {
           return highlight(node.value, theme as string, node.lang || 'text')
         })
-        highlightHTML = `<div class="shiki-container">${allHighlighted.join()}</div>`
+        highlightHTML = `<div class="shiki-container">${allHighlighted.join('')}</div>`
       } else {
         highlightHTML = highlight(node.value, theme as string, node.lang || 'text')
       }
