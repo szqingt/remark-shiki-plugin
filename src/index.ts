@@ -1,5 +1,5 @@
 import type { Root, Code } from 'mdast'
-import type { HighlighterOptions, Highlighter } from 'shiki'
+import type { HighlighterOptions, Highlighter, HtmlRendererOptions } from 'shiki'
 
 import { createRequire } from 'module'
 import { createSyncFn } from 'synckit'
@@ -8,10 +8,30 @@ import { visit } from 'unist-util-visit'
 interface Options extends HighlighterOptions {
   highlighter?: Highlighter
   generateMultiCode: boolean
+  highlightLines: boolean
+}
+
+const metaToLines = (meta: string): HtmlRendererOptions['lineOptions'] => {
+  const reg = /(.*){([\d,-]+)}/
+  const match = reg.exec(meta);
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  const [_, className, lineInfoStr ] = Array.from(match || [])
+
+  const lineList = lineInfoStr
+    .split(',')
+    .map(v => v.split('-').map(v => parseInt(v, 10)))
+    .map(([start, end]) => {
+      return end ? [...Array.from({ length: end - start + 1 }, (_, i) => start + i)] : [start]
+    }).flat(1)
+
+  return lineList.map(line => ({
+    line,
+    classes: className ? [className] : ['highlighted']
+  }))
 }
 
 const ShikiRemarkPlugin = (options: Options) => {
-  const { themes = [], theme = 'nord', generateMultiCode, langs } = options;
+  const { themes = [], theme = 'nord', generateMultiCode, highlightLines, langs } = options;
   const custHighlighter = options.highlighter
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   let syncRun: any
@@ -21,15 +41,16 @@ const ShikiRemarkPlugin = (options: Options) => {
     syncRun('getHighlighter', { langs, themes, theme })
   }
 
-  function highlight(code: string, theme: string, lang: string) {
+  function highlight(code: string, theme: string, lang: string, lineOptions: HtmlRendererOptions['lineOptions']) {
   
     if (custHighlighter) {
-      return custHighlighter.codeToHtml(code, { lang, theme, lineOptions: undefined })
+      return custHighlighter.codeToHtml(code, { lang, theme, lineOptions })
     } else {
       return syncRun('codeToHtml', {
         code,
         theme,
         lang,
+        lineOptions,
       })
     }
   }
@@ -38,13 +59,14 @@ const ShikiRemarkPlugin = (options: Options) => {
     visit(tree, 'code', visitor)
     function visitor(node: Code) {
       let highlightHTML;
+      const lineOptions = (highlightLines && node.meta) ? metaToLines(node.meta) : []
       if (generateMultiCode) {
         const allHighlighted = themes.map((theme) => {
-          return highlight(node.value, theme as string, node.lang || 'text')
+          return highlight(node.value, theme as string, node.lang || 'text', lineOptions)
         })
         highlightHTML = `<div class="shiki-container">${allHighlighted.join('')}</div>`
       } else {
-        highlightHTML = highlight(node.value, theme as string, node.lang || 'text')
+        highlightHTML = highlight(node.value, theme as string, node.lang || 'text', lineOptions)
       }
       // eslint-disable-next-line @typescript-eslint/ban-ts-comment
       // @ts-ignore

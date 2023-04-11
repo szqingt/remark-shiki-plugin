@@ -1,6 +1,6 @@
 {
   "name": "remark-shiki-plugin",
-  "version": "0.0.2",
+  "version": "0.0.3",
   "packageManager": "pnpm@7.26.3",
   "description": "remark plugin for shiki",
   "scripts": {
@@ -9,7 +9,7 @@
     "test": "esno test/index.test.mjs",
     "build": "tsup src/index.ts src/worker.ts --format cjs,esm --dts --external ./worker",
     "lint": "eslint .",
-    "publish": "pnpm publish --access public"
+    "publish": "pnpm publish"
   },
   "keywords": [
     "remark",
