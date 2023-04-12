@@ -57,7 +57,7 @@ import fromMarkdown from 'remark-parse'
 import { unified } from 'unified'
 import ShikiRemarkPlugin from 'remark-shikiplugin'
 
-const code = "```typescript test-highlight{1,2}\nconst hello = 'world';\nconst aa = 123\n```"
+const code = "```typescript ins={1,2} del={3}\nconst hello = 'world';\nconst aa = 123\n```"
 import { unified } from 'unified'
 
 unified()
@@ -73,16 +73,32 @@ unified()
 Add these to your CSS
 
 ```css
-.shiki .test-highlight {
-  background: #192e66;
+.shiki .del {
+  background: #471a2b;
 }
+
+.shiki .ins {
+  background: #1f3820;
+}
+.shiki .ins::before {
+  content: "+";
+  color: #69b072;
+}
+
+.shiki .del::before {
+  content: "-";
+  color: #bb909f;
+}
+
+
 ```
 
 Then you can highlight lines in code block.
 
-```typescript test-highlight{1,2}
+```typescript ins={1,2} del={3}
 const hello = 'world';
-const aa = 123
+const aa = 123;
+const bb = 123;
 ```
 
 ## API
@@ -95,6 +111,7 @@ options extends shiki `HighlighterOptions`
 Provide a custom highlighter
 
 #### `options.generateMultiCode`
+这个配置是用来决定你是否启用生成多个Code块
 This configuration item means whether to generate multiple Codes, the type is boolean default value is false., when the value is true, please provide the themes configuration.
 
 #### `options.highlightLines`

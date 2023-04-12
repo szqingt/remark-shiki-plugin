@@ -11,12 +11,21 @@ interface Options extends HighlighterOptions {
   highlightLines: boolean
 }
 
-const metaToLines = (meta: string): HtmlRendererOptions['lineOptions'] => {
-  const reg = /(.*){([\d,-]+)}/
-  const match = reg.exec(meta);
+function parseMarkingToLines(markingLines: string): HtmlRendererOptions['lineOptions'] {
+  if (!markingLines) return []
+  return markingLines.split(' ').filter(Boolean).map(mark => markToLines(mark)).flat(1)
+}
+
+const markToLines = (mark: string) => {
+  const reg = /(.*)={([\d,-]+)}/
+  // eg aa={1,2}
+  const match = reg.exec(mark)
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [_, className, lineInfoStr ] = Array.from(match || [])
-
+  if (!lineInfoStr) {
+    console.warn('parase markToLines error, invalid code inline marking:', mark);
+    return []
+  }
   const lineList = lineInfoStr
     .split(',')
     .map(v => v.split('-').map(v => parseInt(v, 10)))
@@ -59,7 +68,7 @@ const ShikiRemarkPlugin = (options: Options) => {
     visit(tree, 'code', visitor)
     function visitor(node: Code) {
       let highlightHTML;
-      const lineOptions = (highlightLines && node.meta) ? metaToLines(node.meta) : []
+      const lineOptions = (highlightLines && node.meta) ? parseMarkingToLines(node.meta) : []
       if (generateMultiCode) {
         const allHighlighted = themes.map((theme) => {
           return highlight(node.value, theme as string, node.lang || 'text', lineOptions)
