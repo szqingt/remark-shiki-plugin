@@ -5,10 +5,12 @@ import { createRequire } from 'module'
 import { createSyncFn } from 'synckit'
 import { visit } from 'unist-util-visit'
 
-interface Options extends HighlighterOptions {
+type CustomerHtmlHandle = (code: Code, shikiGenHtml: string) => string
+export interface Options extends HighlighterOptions {
+  generateMultiCode?: boolean
+  highlightLines?: boolean
   highlighter?: Highlighter
-  generateMultiCode: boolean
-  highlightLines: boolean
+  customerHtmlHandle?: CustomerHtmlHandle
 }
 
 function parseMarkingToLines(markingLines: string): HtmlRendererOptions['lineOptions'] {
@@ -21,9 +23,9 @@ const markToLines = (mark: string) => {
   // eg aa={1,2}
   const match = reg.exec(mark)
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const [_, className, lineInfoStr ] = Array.from(match || [])
+  const [_, className, lineInfoStr] = Array.from(match || [])
   if (!lineInfoStr) {
-    console.warn('parase markToLines error, invalid code inline marking:', mark);
+    console.warn('parase markToLines error, invalid code inline marking:', mark)
     return []
   }
   const lineList = lineInfoStr
@@ -40,9 +42,17 @@ const markToLines = (mark: string) => {
 }
 
 const ShikiRemarkPlugin = (options: Options) => {
-  const { themes = [], theme = 'nord', generateMultiCode, highlightLines, langs } = options;
+  const {
+    themes = [],
+    theme = 'nord',
+    generateMultiCode,
+    highlightLines,
+    langs,
+    customerHtmlHandle
+  } = options
   const custHighlighter = options.highlighter
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  // (?:\s|^)title=\s*(["'])(.*?)(?<!\\)\1
   let syncRun: any
   if (!custHighlighter) {
     const require = createRequire(import.meta.url)
@@ -50,32 +60,36 @@ const ShikiRemarkPlugin = (options: Options) => {
     syncRun('getHighlighter', { langs, themes, theme })
   }
 
-  function highlight(code: string, theme: string, lang: string, lineOptions: HtmlRendererOptions['lineOptions']) {
-  
+  function highlight(code: Code, theme: string, lang: string, lineOptions: HtmlRendererOptions['lineOptions']) {
+    let shikiGenHtml: string
     if (custHighlighter) {
-      return custHighlighter.codeToHtml(code, { lang, theme, lineOptions })
+      shikiGenHtml = custHighlighter.codeToHtml(code.value, { lang, theme, lineOptions })
     } else {
-      return syncRun('codeToHtml', {
-        code,
+      shikiGenHtml = syncRun('codeToHtml', {
+        code: code.value,
         theme,
         lang,
         lineOptions,
       })
     }
+    if (customerHtmlHandle) {
+      return customerHtmlHandle(code, shikiGenHtml)
+    }
+    return shikiGenHtml
   }
   return function (tree: Root) {
 
     visit(tree, 'code', visitor)
     function visitor(node: Code) {
-      let highlightHTML;
+      let highlightHTML: string
       const lineOptions = (highlightLines && node.meta) ? parseMarkingToLines(node.meta) : []
       if (generateMultiCode) {
         const allHighlighted = themes.map((theme) => {
-          return highlight(node.value, theme as string, node.lang || 'text', lineOptions)
+          return highlight(node, theme as string, node.lang || 'text', lineOptions)
         })
         highlightHTML = `<div class="shiki-container">${allHighlighted.join('')}</div>`
       } else {
-        highlightHTML = highlight(node.value, theme as string, node.lang || 'text', lineOptions)
+        highlightHTML = highlight(node, theme as string, node.lang || 'text', lineOptions)
       }
       // eslint-disable-next-line @typescript-eslint/ban-ts-comment
       // @ts-ignore

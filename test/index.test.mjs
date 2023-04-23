@@ -7,8 +7,9 @@ const root1 = {
     {
       type: 'code',
       value: 'const aa = 123;',
+      meta: 'title="123"',
       lang: 'typescript',
-      snapshot: "<pre class=\"shiki vitesse-light\" style=\"background-color: #ffffff\" tabindex=\"0\"><code><span class=\"line\"><span style=\"color: #AB5959\">const </span><span style=\"color: #B07D48\">aa</span><span style=\"color: #AB5959\"> = </span><span style=\"color: #2F798A\">123</span><span style=\"color: #999999\">;</span></span></code></pre>"
+      snapshot: `<figure><figcaption>123</figcaption><pre class="shiki vitesse-light" style="background-color: #ffffff" tabindex="0"><code><span class="line"><span style="color: #AB5959">const </span><span style="color: #B07D48">aa</span><span style="color: #AB5959"> = </span><span style="color: #2F798A">123</span><span style="color: #999999">;</span></span></code></pre></figure>`
     }
   ]
 }
@@ -46,32 +47,13 @@ const root3 = {
   ]
 }
 
-// const run1 = ShikiRemarkPlugin({
-//   theme: 'vitesse-light',
-//   themes: ['vitesse-light', 'vitesse-dark'],
-//   generateMultiCode: false
-// })
-
-// const run2 = ShikiRemarkPlugin({
-//   theme: 'vitesse-light',
-//   themes: ['vitesse-light', 'vitesse-dark'],
-//   generateMultiCode: true
-// })
-
-// const run3 = ShikiRemarkPlugin({
-//   theme: 'vitesse-light',
-//   themes: ['vitesse-light', 'vitesse-dark'],
-//   generateMultiCode: true
-// })
-
-
 function test(root, options = {}) {
   (ShikiRemarkPlugin({
     theme: 'vitesse-light',
     themes: ['vitesse-light', 'vitesse-dark'],
     ...options
-  }))(root);
-  let pass = true;
+  }))(root)
+  let pass = true
   visit(root, 'html', (code) => {
     if (!pass) return
     pass = code.value === code.snapshot
@@ -82,12 +64,21 @@ function test(root, options = {}) {
 
 function runAll() {
   const testDataList = [
-    // {data: root1},
-    // {data: root2, options: {generateMultiCode: true}},
+    {
+      data: root1, options: {
+        customerHtmlHandle(code, html) {
+          const titleReg = /(?:\s|^)title\s*=\s*(["'])(.*?)(?<!\\)\1/
+          const match = (code.meta || '').match(titleReg)
+          const [_, __, titleValue] = Array.from(match || [])
+          return `<figure><figcaption>${titleValue}</figcaption>${html}</figure>`
+        }
+      }
+    },
+    {data: root2, options: {generateMultiCode: true}},
     {data: root3, options: {generateMultiCode: true, highlightLines: true}},
   ]
-  const failed = testDataList.some(({data, options}) => !test(data, options))
-  
+  const failed = testDataList.some(({ data, options }) => !test(data, options))
+
   if (failed) {
     throw new Error('test failed')
   }
