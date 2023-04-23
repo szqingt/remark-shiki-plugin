@@ -6,10 +6,10 @@ const root1 = {
   children: [
     {
       type: 'code',
-      value: 'const aa = 123;',
+      value: `const hello = 'world';`,
       meta: 'title="123"',
       lang: 'typescript',
-      snapshot: `<figure><figcaption>123</figcaption><pre class="shiki vitesse-light" style="background-color: #ffffff" tabindex="0"><code><span class="line"><span style="color: #AB5959">const </span><span style="color: #B07D48">aa</span><span style="color: #AB5959"> = </span><span style="color: #2F798A">123</span><span style="color: #999999">;</span></span></code></pre></figure>`
+      snapshot: `<figure><figcaption>123</figcaption><pre class="shiki vitesse-light" style="background-color: #ffffff" tabindex="0"><code><span class="line"><span style="color: #AB5959">const </span><span style="color: #B07D48">hello</span><span style="color: #AB5959"> = </span><span style="color: #B5695999">&#39;</span><span style="color: #B56959">world</span><span style="color: #B5695999">&#39;</span><span style="color: #999999">;</span></span></code></pre></figure>`
     }
   ]
 }

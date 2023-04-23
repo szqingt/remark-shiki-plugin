@@ -1,11 +1,11 @@
 import type { Root, Code } from 'mdast'
-import type { HighlighterOptions, Highlighter, HtmlRendererOptions } from 'shiki'
+import type { HighlighterOptions, Highlighter, HtmlRendererOptions, IThemeRegistration } from 'shiki'
 
 import { createRequire } from 'module'
 import { createSyncFn } from 'synckit'
 import { visit } from 'unist-util-visit'
 
-type CustomerHtmlHandle = (code: Code, shikiGenHtml: string) => string
+type CustomerHtmlHandle = (code: Code, shikiGenHtml: string, theme: IThemeRegistration) => string
 export interface Options extends HighlighterOptions {
   generateMultiCode?: boolean
   highlightLines?: boolean
@@ -60,10 +60,10 @@ const ShikiRemarkPlugin = (options: Options) => {
     syncRun('getHighlighter', { langs, themes, theme })
   }
 
-  function highlight(code: Code, theme: string, lang: string, lineOptions: HtmlRendererOptions['lineOptions']) {
+  function highlight(code: Code, theme: IThemeRegistration, lang: string, lineOptions: HtmlRendererOptions['lineOptions']) {
     let shikiGenHtml: string
     if (custHighlighter) {
-      shikiGenHtml = custHighlighter.codeToHtml(code.value, { lang, theme, lineOptions })
+      shikiGenHtml = custHighlighter.codeToHtml(code.value, { lang, theme: theme as string, lineOptions })
     } else {
       shikiGenHtml = syncRun('codeToHtml', {
         code: code.value,
@@ -73,7 +73,7 @@ const ShikiRemarkPlugin = (options: Options) => {
       })
     }
     if (customerHtmlHandle) {
-      return customerHtmlHandle(code, shikiGenHtml)
+      return customerHtmlHandle(code, shikiGenHtml, theme)
     }
     return shikiGenHtml
   }
@@ -85,11 +85,11 @@ const ShikiRemarkPlugin = (options: Options) => {
       const lineOptions = (highlightLines && node.meta) ? parseMarkingToLines(node.meta) : []
       if (generateMultiCode) {
         const allHighlighted = themes.map((theme) => {
-          return highlight(node, theme as string, node.lang || 'text', lineOptions)
+          return highlight(node, theme, node.lang || 'text', lineOptions)
         })
         highlightHTML = `<div class="shiki-container">${allHighlighted.join('')}</div>`
       } else {
-        highlightHTML = highlight(node, theme as string, node.lang || 'text', lineOptions)
+        highlightHTML = highlight(node, theme, node.lang || 'text', lineOptions)
       }
       // eslint-disable-next-line @typescript-eslint/ban-ts-comment
       // @ts-ignore

@@ -165,9 +165,9 @@ This configuration item means whether to generate multiple Codes, the type is bo
 This configuration is used to determine whether you have enabled the highlighted line mode, the type is boolean default value is false.
 
 #### `options.customerHtmlHandle` 
-这个配置用来自定义处理生成出来的 HTML，某些场景可能需要更近一步的方式来处理生成处的内容。可以传递一个方法来自定义的处理函数类型是 `(code: Code, shikiGenHtml: string) => string` 然后返回处理之后的 HTML 
+这个配置用来自定义处理生成出来的 HTML，某些场景可能需要更近一步的方式来处理生成处的内容。可以传递一个方法来自定义的处理函数类型是 `(code: Code, shikiGenHtml: string, theme: IThemeRegistration) => string` 然后返回处理之后的 HTML 
 
-This configuration is used to customize the processing of the generated HTML. In some scenarios, a more advanced approach may be needed to process the generated content. You can pass a method to customize the processing function, type is `(code: Code, shikiGenHtml: string) => string` then return the processed HTML.
+This configuration is used to customize the processing of the generated HTML. In some scenarios, a more advanced approach may be needed to process the generated content. You can pass a method to customize the processing function, type is `(code: Code, shikiGenHtml: string, theme: IThemeRegistration) => string` then return the processed HTML.
 
 
 ## Why do we need this plugin
